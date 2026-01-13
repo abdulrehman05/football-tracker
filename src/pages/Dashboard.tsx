@@ -222,7 +222,7 @@ export default function Dashboard() {
   const [customStats, setCustomStats] = useState<CustomStat[]>([]);
   const [drawer, setDrawer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
+  console.log("dashboard");
   useEffect(() => {
     const load = async () => {
       setLoading(true);
