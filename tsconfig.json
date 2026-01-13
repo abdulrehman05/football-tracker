@@ -1,0 +1,21 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "rules": {
+    // Disables the "React is declared but never used" error
+    "no-unused-vars": "off",
+    "react/react-in-jsx-scope": "off",
+
+    // Disables warnings about missing prop-types (common in student projects)
+    "react/prop-types": "off",
+
+    // Allows you to leave console.logs in for debugging
+    "no-console": "off",
+
+    // Prevents "unescaped entity" errors like using ' instead of &apos;
+    "react/no-unescaped-entities": "off"
+  }
+}
