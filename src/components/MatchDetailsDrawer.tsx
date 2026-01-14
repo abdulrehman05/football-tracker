@@ -165,7 +165,8 @@ export default function MatchDetailsDrawer({
       ),
     })),
     ...customStats.map((cs) => ({
-      title: cs.name,
+      title: <TooltipHeader title={cs.name} />,
+      // title: cs.name,
       key: cs.id,
       align: "center" as const,
       width: 100,

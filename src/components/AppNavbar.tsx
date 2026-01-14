@@ -161,6 +161,7 @@ const Navbar = () => {
       </Drawer>
 
       <style>{`
+      .ant-drawer-close{color:white!important}
         @media (max-width: 768px) {
           .desktop-menu { display: none !important; }
           .mobile-toggle { display: block !important; }

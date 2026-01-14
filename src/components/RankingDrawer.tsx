@@ -66,6 +66,7 @@ import {
   type AggregatedPlayer,
 } from "../utils/dashboard";
 import type { Player } from "../types/Player";
+import { getRankColor } from "./StatCard";
 
 const { Text } = Typography;
 
@@ -102,7 +103,13 @@ export default function RankingDrawer({
             width: 70,
             align: "center",
             render: (_, record: any, i) => (
-              <Text strong type="secondary">
+              <Text
+                strong
+                type="secondary"
+                style={{
+                  color: getRankColor(record?.rank),
+                }}
+              >
                 {record?.rank}
               </Text>
             ),

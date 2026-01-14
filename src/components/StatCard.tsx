@@ -62,6 +62,12 @@ import { applyCompetitionRanking } from "../utils/dashboard";
 
 const { Text } = Typography;
 
+export const getRankColor = (index: number) => {
+  if (index === 1) return "#FFD700"; // Gold
+  if (index === 2) return "#C0C0C0"; // Silver
+  if (index === 3) return "#CD7F32"; // Bronze
+  return "#8c8c8c";
+};
 export default function StatCard({
   title,
   ranking,
@@ -70,13 +76,6 @@ export default function StatCard({
   stat,
 }: any) {
   const getPlayer = (id: string) => players.find((p: any) => p.id === id);
-
-  const getRankColor = (index: number) => {
-    if (index === 0) return "#FFD700"; // Gold
-    if (index === 1) return "#C0C0C0"; // Silver
-    if (index === 2) return "#CD7F32"; // Bronze
-    return "#8c8c8c";
-  };
 
   const rankedDataSource = applyCompetitionRanking(ranking, stat.value) as any;
   return (
@@ -125,6 +124,7 @@ export default function StatCard({
                       style={{
                         color: getRankColor(r?.rank),
                         fontSize: 16,
+                        fontWeight: "bold",
                       }}
                     >
                       {r?.rank}
