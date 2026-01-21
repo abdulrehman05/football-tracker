@@ -12,6 +12,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { motion } from "framer-motion";
+import { css } from "@emotion/css";
 
 const { Header } = Layout;
 
@@ -149,6 +150,11 @@ const Navbar = () => {
       <Drawer
         title="Menu"
         placement="right"
+        className={css`
+          .ant-drawer-close {
+            color: white !important;
+          }
+        `}
         onClose={() => setMobileVisible(false)}
         open={mobileVisible}
         styles={{
@@ -161,7 +167,6 @@ const Navbar = () => {
       </Drawer>
 
       <style>{`
-      .ant-drawer-close{color:white!important}
         @media (max-width: 768px) {
           .desktop-menu { display: none !important; }
           .mobile-toggle { display: block !important; }

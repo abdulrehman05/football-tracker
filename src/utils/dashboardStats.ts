@@ -5,6 +5,7 @@ export interface DashboardStat {
   key: string;
   title: string;
   value: (p: AggregatedPlayer) => number;
+  additionalVal?: (p: AggregatedPlayer) => string | number;
   sort: "asc" | "desc";
   unit?: string;
 }
@@ -74,6 +75,7 @@ export const dashboardStats: DashboardStat[] = [
     key: "consistency",
     title: "Most Consistent",
     value: consistency,
+    additionalVal: (p) => ` (avg: ${avgRating(p)})`,
     sort: "asc",
   },
   {
@@ -81,6 +83,17 @@ export const dashboardStats: DashboardStat[] = [
     title: "Best Goal Conversion",
     value: (p) =>
       p.totals.shots ? (p.totals.goals / p.totals.shots) * 100 : 0,
+
+    additionalVal: (p) => ` (${p.totals.goals} / ${p.totals.shots})`,
+    sort: "desc",
+    unit: "%",
+  },
+  {
+    key: "onTargetPercent",
+    title: "Target Shot Percentage",
+    value: (p) =>
+      p.totals.shots ? (p.totals.shotsOnTarget / p.totals.shots) * 100 : 0,
+    additionalVal: (p) => ` (${p.totals.shotsOnTarget} / ${p.totals.shots})`,
     sort: "desc",
     unit: "%",
   },
@@ -99,6 +112,9 @@ export function customStatToDashboardStat(cs: CustomStat) {
     key: cs.id,
     title: cs.name,
     value: (p: any) => p.customTotals[cs.id] || 0,
+    additionalVal: () => {
+      return "";
+    },
     sort: "desc" as const,
     unit: cs.unit,
   };

@@ -59,6 +59,8 @@
 import { Card, Flex, List, Avatar, Typography, Button, Space } from "antd";
 import { TrophyOutlined, RightOutlined } from "@ant-design/icons";
 import { applyCompetitionRanking } from "../utils/dashboard";
+import type { DashboardStat } from "../utils/dashboardStats";
+import type { Player } from "../types/Player";
 
 const { Text } = Typography;
 
@@ -74,7 +76,13 @@ export default function StatCard({
   players,
   onViewAll,
   stat,
-}: any) {
+}: {
+  stat: DashboardStat;
+  title?: string | number;
+  ranking: any;
+  players: Player[];
+  onViewAll: any;
+}) {
   const getPlayer = (id: string) => players.find((p: any) => p.id === id);
 
   const rankedDataSource = applyCompetitionRanking(ranking, stat.value) as any;
@@ -143,7 +151,8 @@ export default function StatCard({
                   <Text strong style={{ color: "#0050b3" }}>
                     {Number.isFinite(thisValue)
                       ? thisValue.toFixed(1)
-                      : thisValue}
+                      : thisValue}{" "}
+                    {stat.additionalVal ? stat.additionalVal(r) : ""}
                   </Text>
                 </div>
               </Flex>

@@ -344,6 +344,9 @@ export default function Dashboard() {
                         value: stat.value,
                         sort: stat.sort,
                         unit: stat.unit,
+                        additionalVal: stat?.additionalVal
+                          ? stat?.additionalVal
+                          : undefined,
                       })
                     }
                   />
@@ -361,6 +364,7 @@ export default function Dashboard() {
           ranking={rankPlayers(aggregated, drawer.value, drawer.sort)}
           players={players}
           value={drawer.value}
+          additionalVal={drawer.additionalVal}
           unit={drawer.unit as any}
           onClose={() => setDrawer(null)}
         />

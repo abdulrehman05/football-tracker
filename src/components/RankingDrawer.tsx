@@ -67,6 +67,7 @@ import {
 } from "../utils/dashboard";
 import type { Player } from "../types/Player";
 import { getRankColor } from "./StatCard";
+import type { DashboardStat } from "../utils/dashboardStats";
 
 const { Text } = Typography;
 
@@ -78,7 +79,8 @@ export default function RankingDrawer({
   unit,
   value,
   onClose,
-}: any) {
+  additionalVal,
+}: DashboardStat & any) {
   const getPlayer = (id: string) => players.find((p: any) => p.id === id);
   const rankedDataSource = applyCompetitionRanking(ranking, value) as any;
   return (
@@ -136,7 +138,8 @@ export default function RankingDrawer({
             align: "right",
             render: (_, r) => (
               <Tag color="blue" style={{ borderRadius: 4, fontWeight: "bold" }}>
-                {value(r).toFixed(2)} {unit || ""}
+                {value(r).toFixed(2)} {unit || ""}{" "}
+                {additionalVal ? additionalVal(r) : ""}
               </Tag>
             ),
           },
