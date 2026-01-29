@@ -109,11 +109,17 @@ export const winPct = (p: AggregatedPlayer) =>
   p.matches ? (p.wins / p.matches) * 100 : 0;
 
 export const consistency = (p: AggregatedPlayer) => {
-  if (p.ratings.length < 2) return 0;
+  if (p.ratings.length < 4) return 0;
+
   const avg = avgRating(p);
-  return Math.sqrt(
-    p.ratings.reduce((s, r) => s + (r - avg) ** 2, 0) / p.ratings.length
+  if (avg < 7) return 0;
+
+  const deviation = Math.sqrt(
+    p.ratings.reduce((s, r) => s + (r - avg) ** 2, 0) /
+      Math.max(1, p.ratings.length - 1)
   );
+
+  return avg * 0.7 - deviation * 0.3;
 };
 
 // export function rankPlayers<T>(

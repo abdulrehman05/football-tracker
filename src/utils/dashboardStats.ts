@@ -75,8 +75,8 @@ export const dashboardStats: DashboardStat[] = [
     key: "consistency",
     title: "Most Consistent",
     value: consistency,
-    additionalVal: (p) => ` (avg: ${avgRating(p)})`,
-    sort: "asc",
+    additionalVal: (p) => ` (avg: ${avgRating(p).toFixed(3)})`,
+    sort: "desc",
   },
   {
     key: "goalConversion",
