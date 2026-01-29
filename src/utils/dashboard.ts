@@ -119,7 +119,7 @@ export const consistency = (p: AggregatedPlayer) => {
       Math.max(1, p.ratings.length - 1)
   );
 
-  return avg * 0.7 - deviation * 0.3;
+  return avg * 0.75 - deviation * 0.25;
 };
 
 // export function rankPlayers<T>(
