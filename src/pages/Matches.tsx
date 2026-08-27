@@ -433,7 +433,7 @@ export default function Matches() {
   // Pagination & Filtering State
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(
-    null
+    null,
   );
   const pageSize = 15;
 
@@ -451,7 +451,7 @@ export default function Matches() {
 
         setPlayers(pSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
         setCustomStats(
-          cSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
+          cSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })),
         );
 
         const sortedMatches = snap.docs

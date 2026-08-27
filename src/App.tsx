@@ -103,6 +103,19 @@ export default function App() {
               }
             />
             <Route
+              path="/"
+              // element={
+              //   <ProtectedRoute>
+              //     <Dashboard />
+              //   </ProtectedRoute>
+              // }
+              element={
+                <div style={{ padding: 24 }}>
+                  <Dashboard />
+                </div>
+              }
+            />
+            <Route
               path="/dashboard"
               // element={
               //   <ProtectedRoute>
