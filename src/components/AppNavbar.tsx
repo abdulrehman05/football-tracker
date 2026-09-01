@@ -8,7 +8,7 @@ import {
   ThunderboltOutlined,
   LogoutOutlined,
   TeamOutlined,
-  SlackCircleFilled,
+  HourglassOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -45,7 +45,7 @@ const Navbar = () => {
     {
       key: "/team-balancer",
       label: "Balance Teams",
-      icon: <SlackCircleFilled />,
+      icon: <HourglassOutlined />,
       //   protected: true,
     },
     {
