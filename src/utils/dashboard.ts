@@ -1,7 +1,8 @@
 import dayjs from "dayjs";
 import type { Match } from "../types/match";
 import type { CustomStat } from "../types/CustomStat";
-import { numberStats } from "../types/matchplayer";
+import { numberStats, type MatchPlayer } from "../types/matchplayer";
+import type { Player } from "../types/Player";
 
 export type RangeKey =
   | "thisMonth"
@@ -42,6 +43,7 @@ export function resolveDateRange(key: RangeKey) {
 }
 
 export interface AggregatedPlayer {
+  playerObject: Player | undefined; // Replace 'any' with the actual type if available
   playerId: string;
   matches: number;
   wins: number;
@@ -52,7 +54,11 @@ export interface AggregatedPlayer {
   ratings: number[];
 }
 
-export function aggregateMatches(matches: Match[], customStats: CustomStat[]) {
+export function aggregateMatches(
+  matches: Match[],
+  customStats: CustomStat[],
+  players: Player[],
+) {
   const map: Record<string, AggregatedPlayer> = {};
 
   for (const match of matches) {
@@ -65,7 +71,10 @@ export function aggregateMatches(matches: Match[], customStats: CustomStat[]) {
 
       for (const p of team?.players || []) {
         if (!map[p.playerId]) {
+          const getPlayer = (id: string) =>
+            players.find((p: any) => p.id === id);
           map[p.playerId] = {
+            playerObject: getPlayer(p.playerId),
             playerId: p.playerId,
             matches: 0,
             wins: 0,
@@ -106,7 +115,7 @@ export const avgRating = (p: AggregatedPlayer) =>
     : 0;
 
 export const winPct = (p: AggregatedPlayer) =>
-  p.matches ? (p.wins / p.matches) * 100 : 0;
+  p.matches && p.matches > 3 ? (p.wins / p.matches) * 100 : 0;
 
 export const consistency = (p: AggregatedPlayer) => {
   if (p.ratings.length < 4) return 0;
@@ -116,7 +125,7 @@ export const consistency = (p: AggregatedPlayer) => {
 
   const deviation = Math.sqrt(
     p.ratings.reduce((s, r) => s + (r - avg) ** 2, 0) /
-      Math.max(1, p.ratings.length - 1)
+      Math.max(1, p.ratings.length - 1),
   );
 
   return avg * 0.75 - deviation * 0.25;
@@ -135,20 +144,22 @@ export function rankPlayers<T>(
   players: T[],
   value: (p: T) => number,
   dir: "asc" | "desc",
-  dontRemoveZeros: boolean = false // Defaults to true to keep existing behavior
+  dontRemoveZeros: boolean = false, // Defaults to true to keep existing behavior
 ) {
   return players
     .filter((p) => {
+      console.log({ p });
+      if ((p as any)?.playerObject?.name?.includes("placeholder")) return false;
       if (dontRemoveZeros) return true;
       return value(p) !== 0;
     })
     .sort((a, b) =>
-      dir === "desc" ? value(b) - value(a) : value(a) - value(b)
+      dir === "desc" ? value(b) - value(a) : value(a) - value(b),
     );
 }
 export function applyCompetitionRanking<T>(
   sortedItems: T[],
-  valueFn: (item: T) => number
+  valueFn: (item: T) => number,
 ): (T & { rank: number })[] {
   let lastValue: number | null = null;
   let lastRank = 1;

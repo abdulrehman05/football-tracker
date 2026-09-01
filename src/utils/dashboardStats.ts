@@ -27,15 +27,9 @@ export const dashboardStats: DashboardStat[] = [
     sort: "desc",
   },
   {
-    key: "shots",
-    title: "Most Shots",
-    value: (p) => p.totals.shots || 0,
-    sort: "desc",
-  },
-  {
-    key: "shotsOnTarget",
-    title: "Shots on Target",
-    value: (p) => p.totals.shotsOnTarget || 0,
+    key: "avgRating",
+    title: "Best Average Rating",
+    value: avgRating,
     sort: "desc",
   },
   {
@@ -48,27 +42,38 @@ export const dashboardStats: DashboardStat[] = [
     key: "winPct",
     title: "Best Win %",
     value: winPct,
+    additionalVal: (p) => ` (${p.wins}/${p.matches})`,
     sort: "desc",
     unit: "%",
   },
   {
     key: "lossPct",
     title: "Worst Loss %",
-    value: (p) => (p.matches ? (p.losses / p.matches) * 100 : 0),
+    value: (p) =>
+      p.matches && p.matches > 3 ? (p.losses / p.matches) * 100 : 0,
+    additionalVal: (p) => ` (${p.losses}/${p.matches})`,
     sort: "desc",
     unit: "%",
   },
   {
     key: "drawPct",
     title: "Draw %",
-    value: (p) => (p.matches ? (p.draws / p.matches) * 100 : 0),
+    value: (p) =>
+      p.matches && p.matches > 3 ? (p.draws / p.matches) * 100 : 0,
+    additionalVal: (p) => ` (${p.draws}/${p.matches})`,
     sort: "desc",
     unit: "%",
   },
   {
-    key: "avgRating",
-    title: "Best Average Rating",
-    value: avgRating,
+    key: "shots",
+    title: "Most Shots",
+    value: (p) => p.totals.shots || 0,
+    sort: "desc",
+  },
+  {
+    key: "shotsOnTarget",
+    title: "Shots on Target",
+    value: (p) => p.totals.shotsOnTarget || 0,
     sort: "desc",
   },
   {
@@ -82,7 +87,9 @@ export const dashboardStats: DashboardStat[] = [
     key: "goalConversion",
     title: "Best Goal Conversion",
     value: (p) =>
-      p.totals.shots ? (p.totals.goals / p.totals.shots) * 100 : 0,
+      p.totals.shots && p.totals.shots >= p.totals.goals
+        ? (p.totals.goals / p.totals.shots) * 100
+        : 0,
 
     additionalVal: (p) => ` (${p.totals.goals} / ${p.totals.shots})`,
     sort: "desc",
@@ -102,6 +109,21 @@ export const dashboardStats: DashboardStat[] = [
     title: "Goal Involvement / Match",
     value: (p) =>
       p.matches ? (p.totals.goals + p.totals.assists) / p.matches : 0,
+    sort: "desc",
+  },
+  {
+    key: "leaguePoints",
+    title: "Total League Points",
+    value: (p) => p.wins * 3 + p.draws * 1,
+    additionalVal: (p) => ` (${p.wins}W - ${p.draws}D - ${p.losses}L)`,
+    sort: "desc",
+    unit: "pts",
+  },
+  {
+    key: "ppg",
+    title: "Points Per Game (PPG)",
+    value: (p) => (p.matches ? (p.wins * 3 + p.draws * 1) / p.matches : 0),
+    additionalVal: (p) => ` (${p.wins * 3 + p.draws * 1} pts)`,
     sort: "desc",
   },
 ];

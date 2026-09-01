@@ -249,8 +249,9 @@ export default function Dashboard() {
   }, [matches, range]);
 
   const aggregated = useMemo(
-    () => Object.values(aggregateMatches(filteredMatches, customStats)),
-    [filteredMatches, customStats]
+    () =>
+      Object.values(aggregateMatches(filteredMatches, customStats, players)),
+    [filteredMatches, customStats, players],
   );
 
   const allDashboardStats = useMemo(() => {

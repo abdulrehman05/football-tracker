@@ -8,6 +8,7 @@ import {
   ThunderboltOutlined,
   LogoutOutlined,
   TeamOutlined,
+  SlackCircleFilled,
 } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -42,6 +43,12 @@ const Navbar = () => {
       //   protected: true,
     },
     {
+      key: "/team-balancer",
+      label: "Balance Teams",
+      icon: <SlackCircleFilled />,
+      //   protected: true,
+    },
+    {
       key: "/custom-stats",
       label: "Stats Config",
       icon: <TrophyOutlined />,
@@ -61,14 +68,17 @@ const Navbar = () => {
     (item) =>
       !item.protected ||
       (user && !item.onlyPublic) ||
-      (item.onlyPublic && !user)
+      (item.onlyPublic && !user),
   );
 
   const NavMenu = ({ mode }: { mode: "horizontal" | "vertical" }) => (
     <Menu
       theme="dark"
       mode={mode}
-      selectedKeys={[location.pathname]}
+      selectedKeys={[
+        location.pathname,
+        ...(location.pathname === "/" ? ["/dashboard"] : ""),
+      ]}
       style={{ borderBottom: 0, flex: 1, justifyContent: "end" }}
       items={visibleItems.map((item) => ({
         key: item.key,

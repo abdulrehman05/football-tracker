@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import DevSeed from "./pages/DevSeed";
 import AppNavbar from "./components/AppNavbar";
 import { Layout } from "antd";
+import TeamBalancer from "./pages/TeamBalancer";
 
 dayjs.extend(relativeTime);
 export default function App() {
@@ -125,6 +126,19 @@ export default function App() {
               element={
                 <div style={{ padding: 24 }}>
                   <Dashboard />
+                </div>
+              }
+            />
+            <Route
+              path="/team-balancer"
+              // element={
+              //   <ProtectedRoute>
+              //     <Dashboard />
+              //   </ProtectedRoute>
+              // }
+              element={
+                <div style={{ padding: 24 }}>
+                  <TeamBalancer />
                 </div>
               }
             />

@@ -150,7 +150,9 @@ export default function StatCard({
                 >
                   <Text strong style={{ color: "#0050b3" }}>
                     {Number.isFinite(thisValue)
-                      ? thisValue.toFixed(1)
+                      ? Number.isInteger(thisValue)
+                        ? thisValue.toFixed(0)
+                        : thisValue.toFixed(1)
                       : thisValue}{" "}
                     {stat.additionalVal ? stat.additionalVal(r) : ""}
                   </Text>
