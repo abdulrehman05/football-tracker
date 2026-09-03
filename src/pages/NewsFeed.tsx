@@ -13,6 +13,7 @@ import {
   Badge,
   Modal,
   List,
+  Pagination,
 } from "antd";
 import {
   FireOutlined,
@@ -160,6 +161,15 @@ export default function NewsFeed() {
     }
   }, [tabOptions]);
 
+  // Pagination
+  const PAGE_SIZE = 20;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when filters or headlines change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedPlayerId, categoryFilter, searchQuery, allHeadlines.length]);
+
   const categoryColors: Record<string, string> = {
     Curse: "volcano",
     Shame: "magenta",
@@ -253,83 +263,109 @@ export default function NewsFeed() {
         <Empty description="No spicy news or stats found matching your filters!" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {displayedHeadlines.map((headline, idx) => (
-            <Card
-              hoverable
-              onClick={() => {
-                setActiveHeadline(headline);
-                setModalVisible(true);
-              }}
-              style={{
-                borderRadius: 10,
-                padding: 14,
-                boxShadow: "0 6px 18px rgba(17,17,26,0.04)",
-                border: "1px solid rgba(0,0,0,0.04)",
-                cursor: "pointer",
-                display: "flex",
-                gap: 12,
-                alignItems: "center",
-              }}
-            >
-              <div
+          {displayedHeadlines
+            .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+            .map((headline, idx) => (
+              <Card
+                hoverable
+                onClick={() => {
+                  setActiveHeadline(headline);
+                  setModalVisible(true);
+                }}
                 style={{
+                  borderRadius: 10,
+                  padding: 14,
+                  boxShadow: "0 6px 18px rgba(17,17,26,0.04)",
+                  border: "1px solid rgba(0,0,0,0.04)",
+                  cursor: "pointer",
                   display: "flex",
-                  alignItems: "space-between",
-                  gap: 16,
+                  gap: 12,
+                  alignItems: "center",
                 }}
               >
-                <span style={{ fontSize: 32, lineHeight: 1 }}>
-                  {headline.emoji}
-                </span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "space-between",
+                    gap: 16,
+                  }}
+                >
+                  <span style={{ fontSize: 32, lineHeight: 1 }}>
+                    {headline.emoji}
+                  </span>
 
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: 6,
-                    }}
-                  >
-                    <Tag color={categoryColors[headline.category]}>
-                      {headline.category}
-                    </Tag>
-
-                    {headline.importance >= 9 && (
-                      <Tag icon={<FireOutlined />} color="error">
-                        BREAKING
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <Tag color={categoryColors[headline.category]}>
+                        {headline.category}
                       </Tag>
-                    )}
-                  </div>
 
-                  <Paragraph
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      margin: 0,
-                      color: "#111827",
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {headline.text}
-                  </Paragraph>
+                      {headline.importance >= 9 && (
+                        <Tag icon={<FireOutlined />} color="error">
+                          BREAKING
+                        </Tag>
+                      )}
+                    </div>
 
-                  <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-                    {(headline.relatedPlayerIds || []).slice(0, 4).map((id) => {
-                      const p = players.find((x) => x.id === id);
-                      return (
-                        <Avatar
-                          key={id}
-                          size={24}
-                          src={p?.profilePictureUrl}
-                          icon={<UserOutlined />}
-                        />
-                      );
-                    })}
+                    <Paragraph
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 600,
+                        margin: 0,
+                        color: "#111827",
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {headline.text}
+                    </Paragraph>
+
+                    <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                      {(headline.relatedPlayerIds || [])
+                        .slice(0, 4)
+                        .map((id) => {
+                          const p = players.find((x) => x.id === id);
+                          return (
+                            <Avatar
+                              key={id}
+                              size={24}
+                              src={p?.profilePictureUrl}
+                              icon={<UserOutlined />}
+                            />
+                          );
+                        })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
+
+          {displayedHeadlines.length > PAGE_SIZE && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: 8,
+              }}
+            >
+              <Pagination
+                current={currentPage}
+                pageSize={PAGE_SIZE}
+                total={displayedHeadlines.length}
+                onChange={(p) => setCurrentPage(p)}
+                showSizeChanger={false}
+                showQuickJumper
+                showTotal={(total) =>
+                  `Showing ${Math.min((currentPage - 1) * PAGE_SIZE + 1, total)}-${Math.min(currentPage * PAGE_SIZE, total)} of ${total}`
+                }
+              />
+            </div>
+          )}
         </div>
       )}
       {/* Detail Modal */}

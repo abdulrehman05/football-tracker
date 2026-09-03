@@ -151,7 +151,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🌵",
           category: "Curse",
           text: `${player.name} hasn't found the back of the net in his last ${noGoalGames} matches!`,
-          importance: 7,
+          importance: 6.84 + noGoalGames * 0.04,
         },
       ];
     }
@@ -180,7 +180,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🔥",
           category: "Form",
           text: `${player.name} is on fire! Has scored in ${scoringStreak} consecutive games.`,
-          importance: 8,
+          importance: 7.88 + scoringStreak * 0.04,
         },
       ];
     }
@@ -201,7 +201,7 @@ export const playerRules: PlayerRule[] = [
       },
       { goals: 0, shots: 0 },
     );
-    if (totals.goals === 0 && totals.shots >= 15) {
+    if (totals.goals === 0 && totals.shots >= 12) {
       return [
         {
           id: `${player.id}_stormtrooper`,
@@ -210,7 +210,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🎯",
           category: "Shame",
           text: `${player.name} has taken ${totals.shots} shots all-time and still has ZERO goals.`,
-          importance: 10,
+          importance: 9.5 + totals.shots * 0.04,
         },
       ];
     }
@@ -231,7 +231,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🎩",
           category: "Glory",
           text: `${player.name} took home the match ball with a clinical hat-trick (${f.stats.goals} goals)!`,
-          importance: 7,
+          importance: 6.5 + safe(f.stats.goals) * 0.04,
         });
       }
     });
@@ -246,7 +246,7 @@ export const playerRules: PlayerRule[] = [
       if (!f) return;
       const myScore = f.teamId === "A" ? m.score.teamA : m.score.teamB;
       const oppScore = f.teamId === "A" ? m.score.teamB : m.score.teamA;
-      if (myScore < oppScore && safe(f.stats.playerRating) >= 8.5) {
+      if (myScore < oppScore && safe(f.stats.playerRating) >= 8) {
         hits.push({
           id: `${player.id}_carrying_${m.id}`,
           type: "player",
@@ -254,7 +254,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🎒",
           category: "Glory",
           text: `${player.name} dropped a masterclass ${f.stats.playerRating} rating, but his team STILL lost!`,
-          importance: 7,
+          importance: 7 + (safe(f.stats.playerRating) - 8),
         });
       }
     });
@@ -278,7 +278,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🎯",
           category: "Glory",
           text: `${player.name} was 100% accurate in a match, hitting target on all ${f.stats.shots} shots!`,
-          importance: 6,
+          importance: 5.88 + safe(f.stats.shotsOnTarget) * 0.04,
         });
       }
     });
@@ -320,7 +320,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "⚡",
           category: "Form",
           text: `${player.name} is hot: ${goals} goals in his last ${w} matches.`,
-          importance: 8,
+          importance: 7.88 + goals * 0.04,
         });
       }
     });
@@ -369,7 +369,7 @@ export const playerRules: PlayerRule[] = [
       { goals: 0, assists: 0 },
     );
     const out: NewsHeadline[] = [];
-    if (totals.goals >= 10)
+    if (totals.goals >= 14)
       out.push({
         id: `${player.id}_goals_tot_${totals.goals}`,
         type: "player",
@@ -379,7 +379,7 @@ export const playerRules: PlayerRule[] = [
         text: `${player.name} has racked up ${totals.goals} goals — prolific!`,
         importance: 7,
       });
-    if (totals.assists >= 8)
+    if (totals.assists >= 9)
       out.push({
         id: `${player.id}_assists_tot_${totals.assists}`,
         type: "player",
@@ -405,7 +405,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🅰️",
           category: "Glory",
           text: `${player.name} put on a playmaker clinic with ${f.stats.assists} assists in a single match!`,
-          importance: 8,
+          importance: 7.88 + safe(f.stats.assists) * 0.04,
         });
       }
     });
@@ -425,7 +425,7 @@ export const playerRules: PlayerRule[] = [
       const r = safe(
         findPlayerInMatch(pMatches[i], player.id)!.stats.playerRating,
       );
-      if (r > 0 && r < 5.0) lowRatingStreak++;
+      if (r > 0 && r < 6.6) lowRatingStreak++;
       else break;
     }
 
@@ -437,8 +437,8 @@ export const playerRules: PlayerRule[] = [
           playerId: player.id,
           emoji: "📉",
           category: "Shame",
-          text: `${player.name} is in a severe slump with ${lowRatingStreak} consecutive sub-5.0 match ratings!`,
-          importance: 8,
+          text: `${player.name} is in a severe slump with ${lowRatingStreak} consecutive sub-6.5 match ratings!`,
+          importance: 7.88 + lowRatingStreak * 0.12,
         },
       ];
     }
@@ -485,7 +485,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🧱",
           category: "Glory",
           text: `Brick wall! ${player.name} made ${saves} saves in a single game to keep his team alive.`,
-          importance: 8,
+          importance: 7.88 + saves * 0.04,
         });
       }
     });
@@ -506,7 +506,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "👑",
           category: "Glory",
           text: `${player.name} was untouchable: ${f.stats.goals} goals AND ${f.stats.assists} assists in one game!`,
-          importance: 9,
+          importance: 10,
         });
       }
     });
@@ -528,7 +528,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "💔",
           category: "Shame",
           text: `${player.name} choked from 12 yards out with a painful penalty miss!`,
-          importance: 7,
+          importance: 7.88 + misses * 0.12,
         });
       }
     });
@@ -568,7 +568,7 @@ export const playerRules: PlayerRule[] = [
       const a = safe(f.stats.assists);
       const s = safe(f.stats.shots);
       const r = safe(f.stats.playerRating);
-      if (s >= 5 && g === 0 && a === 0 && r > 0 && r < 6.0) {
+      if (s >= 3 && g === 0 && a === 0 && r > 0 && r < 7.0) {
         hits.push({
           id: `${player.id}_ghost_shooter_${m.id}`,
           type: "player",
@@ -602,7 +602,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "🟨",
           category: "Silly",
           text: `${player.name} has picked up ${cards} cards. The referee has him on speed dial!`,
-          importance: 7,
+          importance: 6.88 + cards * 0.04,
         },
       ];
     }
@@ -630,7 +630,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "😭",
           category: "Silly",
           text: `${player.name} has scored ${lossGoals} goals in losing efforts. Padding stats in defeat?`,
-          importance: 6,
+          importance: 6.88 + lossGoals * 0.2,
         },
       ];
     }
@@ -664,7 +664,7 @@ export const duoRules: DuoRule[] = [
           emoji: "☣️",
           category: "Curse",
           text: `${a.name} played with ${b.name} ${playedTogether} times and has NEVER won!`,
-          importance: 10,
+          importance: 9.92 + playedTogether * 0.04,
         },
       ];
     }
@@ -695,7 +695,7 @@ export const duoRules: DuoRule[] = [
           emoji: "💎",
           category: "Glory",
           text: `${a.name} and ${b.name} are UNDEFEATED when playing together (${playedTogether} matches)!`,
-          importance: 9,
+          importance: 8.88 + playedTogether * 0.04,
         },
       ];
     }
@@ -755,7 +755,7 @@ export const duoRules: DuoRule[] = [
           emoji: "⚔️",
           category: "Glory",
           text: `El Clásico alert! ${a.name} and ${b.name} have scored ${aGoals + bGoals} goals against each other!`,
-          importance: 8,
+          importance: 7.7 + (aGoals + bGoals) * 0.04,
         },
       ];
     }
@@ -791,7 +791,7 @@ export const duoRules: DuoRule[] = [
           emoji: "👊",
           category: "Silly",
           text: `${a.name} punched in a match where he lost against ${b.name}'s team!`,
-          importance: 10,
+          importance: 6,
         });
       }
     });
@@ -817,7 +817,7 @@ export const duoRules: DuoRule[] = [
           emoji: "🎯",
           category: "Glory",
           text: `Telepathic duo: ${a.name} has set up ${b.name} for a goal in ${aAssistsToB} different matches!`,
-          importance: 8,
+          importance: 8.88 + aAssistsToB * 0.04,
         },
       ];
     }
@@ -841,7 +841,7 @@ export const duoRules: DuoRule[] = [
           emoji: "💥",
           category: "Shame",
           text: `Total demolition: ${a.name}'s team crushed ${b.name}'s team ${aScore}-${bScore}!`,
-          importance: 9,
+          importance: 7,
         });
       }
     });
@@ -860,7 +860,7 @@ export const duoRules: DuoRule[] = [
       const rA = safe(aFound.stats.playerRating);
       const rB = safe(bFound.stats.playerRating);
 
-      if (teamScore < oppScore && rA > 0 && rA < 5.5 && rB > 0 && rB < 5.5) {
+      if (teamScore < oppScore && rA > 0 && rA < 6.5 && rB > 0 && rB < 6.5) {
         hits.push({
           id: `double_stinker_${a.id}_${b.id}_${m.id}`,
           type: "duo",
@@ -868,7 +868,7 @@ export const duoRules: DuoRule[] = [
           emoji: "🤡",
           category: "Shame",
           text: `Disasterclass duo: ${a.name} (${rA}) and ${b.name} (${rB}) both put up stinkers in a loss!`,
-          importance: 8,
+          importance: 8.8,
         });
       }
     });
@@ -900,7 +900,7 @@ export const duoRules: DuoRule[] = [
           emoji: "⚖️",
           category: "Form",
           text: `Perfectly balanced: ${a.name} and ${b.name} are deadlocked at ${aWins}-${bWins} in head-to-head wins!`,
-          importance: 7,
+          importance: 5 + playedAgainst * 0.5,
         },
       ];
     }
@@ -986,7 +986,7 @@ export const duoRules: DuoRule[] = [
           emoji: "🎆",
           category: "Silly",
           text: `Goal-fest guaranteed! Matches between ${a.name} and ${b.name} average ${avg} total goals!`,
-          importance: 7,
+          importance: 7 + (totalGoalsScored / playedAgainst) * 0.4,
         },
       ];
     }
@@ -1040,7 +1040,7 @@ export const duoRules: DuoRule[] = [
           emoji: "🚫",
           category: "Shame",
           text: `${a.name} unleashed ${s} shots against ${b.name}'s defense and STILL couldn't score!`,
-          importance: 7,
+          importance: 6.5,
         });
       }
     });
@@ -1057,7 +1057,7 @@ export const duoRules: DuoRule[] = [
       const rA = safe(aFound.stats.playerRating);
       const rB = safe(bFound.stats.playerRating);
 
-      if (rA >= 8.5 && rB >= 8.5) {
+      if (rA >= 8 && rB >= 8) {
         hits.push({
           id: `double_masterclass_${a.id}_${b.id}_${m.id}`,
           type: "duo",
@@ -1065,7 +1065,7 @@ export const duoRules: DuoRule[] = [
           emoji: "⭐",
           category: "Glory",
           text: `Masterclass pair: ${a.name} (${rA}) and ${b.name} (${rB}) put on a performance for the ages!`,
-          importance: 9,
+          importance: 7.5,
         });
       }
     });
@@ -1101,7 +1101,7 @@ export const groupRules: GroupRule[] = [
           emoji: "☣️",
           category: "Curse",
           text: `${group.map((g) => g.name).join(", ")} have played together ${playedTogether} times and have never won.`,
-          importance: 10,
+          importance: 5.5 + playedTogether * 1,
         },
       ];
     }
@@ -1132,7 +1132,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🤝",
           category: "Form",
           text: `${group.map((g) => g.name).join(", ")} have drawn every time they've played together (${playedTogether} matches).`,
-          importance: 8,
+          importance: 6.1 + playedTogether * 0.5,
         },
       ];
     }
@@ -1162,7 +1162,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🔒",
           category: "Shame",
           text: `${group.map((g) => g.name).join(", ")} have played ${playedTogether} times together and collectively failed to score.`,
-          importance: 9,
+          importance: 5.7 + playedTogether * 0.5,
         },
       ];
     }
@@ -1203,7 +1203,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🤝",
           category: "Form",
           text: `${a.name} & ${b.name} vs ${c.name} & ${d.name} have drawn in all ${played} encounters.`,
-          importance: 9,
+          importance: 7 + played * 0.5,
         },
       ];
     }
@@ -1234,7 +1234,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🏆",
           category: "Glory",
           text: `${group.map((g) => g.name).join(", ")} have won every time they've played together (${playedTogether} matches).`,
-          importance: 9,
+          importance: 7.1 + playedTogether * 0.5,
         },
       ];
     }
@@ -1266,7 +1266,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🔱",
           category: "Glory",
           text: `The Golden Trio! ${group.map((g) => g.name).join(", ")} are 100% victorious when playing together (${playedTogether} matches)!`,
-          importance: 10,
+          importance: 7.5 + playedTogether * 0.5,
         },
       ];
     }
@@ -1286,7 +1286,7 @@ export const groupRules: GroupRule[] = [
       if (!found.every((f) => f!.teamId === teamId)) return;
       const oppScore = teamId === "A" ? m.score.teamB : m.score.teamA;
 
-      if (oppScore >= 6) {
+      if (oppScore >= 5) {
         hits.push({
           id: `defensive_disaster_${ids.join("_")}_${m.id}`,
           type: "duo",
@@ -1294,7 +1294,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🌊",
           category: "Shame",
           text: `Defensive collapse! ${group.map((g) => g.name).join(", ")} shipped ${oppScore} goals in a painful loss!`,
-          importance: 8,
+          importance: 5.01 + oppScore * 0.5,
         });
       }
     });
@@ -1313,7 +1313,7 @@ export const groupRules: GroupRule[] = [
       const teamId = found[0]!.teamId;
       if (!found.every((f) => f!.teamId === teamId)) return;
 
-      const all8Plus = found.every((f) => safe(f!.stats.playerRating) >= 8.0);
+      const all8Plus = found.every((f) => safe(f!.stats.playerRating) >= 7.8);
       if (all8Plus) {
         hits.push({
           id: `all_star_trio_${ids.join("_")}_${m.id}`,
@@ -1321,8 +1321,8 @@ export const groupRules: GroupRule[] = [
           relatedPlayerIds: ids,
           emoji: "🌟",
           category: "Glory",
-          text: `All-Star trio: ${group.map((g) => g.name).join(", ")} ALL put up 8.0+ ratings in the same game!`,
-          importance: 9,
+          text: `All-Star trio: ${group.map((g) => g.name).join(", ")} ALL put up 7.8+ ratings in the same game!`,
+          importance: 8 + group.length * 0.5,
         });
       }
     });
@@ -1357,7 +1357,7 @@ export const groupRules: GroupRule[] = [
           emoji: "👻",
           category: "Shame",
           text: `Ghost squad: ${group.map((g) => g.name).join(", ")} collectively registered ZERO goals and ZERO assists in a loss!`,
-          importance: 8,
+          importance: 8.3,
         });
       }
     });
@@ -1391,7 +1391,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🎯",
           category: "Glory",
           text: `Total attack control: ${group.map((g) => g.name).join(", ")} scored EVERY SINGLE goal for their team in ${monopolyGames} different games!`,
-          importance: 9,
+          importance: 8.02 + monopolyGames * 0.5,
         },
       ];
     }
@@ -1423,7 +1423,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🛡️",
           category: "Glory",
           text: `Iron curtain: ${group.map((g) => g.name).join(", ")} have kept ${cleanSheets} clean sheets together!`,
-          importance: 8,
+          importance: 8 + cleanSheets * 0.5,
         },
       ];
     }
@@ -1453,7 +1453,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🔥",
           category: "Silly",
           text: `Pure chaos: Whenever ${group.map((g) => g.name).join(", ")} share a pitch, games average ${(totalGoals / matchesTogether).toFixed(1)} goals!`,
-          importance: 8,
+          importance: 8 + totalGoals * 0.5,
         },
       ];
     }
@@ -1519,7 +1519,7 @@ export const groupRules: GroupRule[] = [
           emoji: "⏳",
           category: "Glory",
           text: `Nail-biter specialists: ${group.map((g) => g.name).join(", ")} have ground out ${narrowWins} 1-goal victories together!`,
-          importance: 7,
+          importance: 7.2 + narrowWins * 0.5,
         },
       ];
     }
@@ -1550,7 +1550,7 @@ export const groupRules: GroupRule[] = [
           emoji: "🤝",
           category: "Form",
           text: `Peacekeepers: ${group.map((g) => g.name).join(", ")} have drawn ${drawsTogether} games when sharing the same squad!`,
-          importance: 8,
+          importance: 7.4 + drawsTogether * 0.5,
         },
       ];
     }
