@@ -14,6 +14,7 @@ import {
   Modal,
   List,
   Pagination,
+  Button,
 } from "antd";
 import {
   FireOutlined,
@@ -30,10 +31,7 @@ import dayjs from "dayjs";
 import type { Match } from "../types/match";
 import type { Player } from "../types/Player";
 import type { CustomStat } from "../types/CustomStat";
-import {
-  generateIntertwinedNews,
-  generatePlayerNews,
-} from "../utils/newsEngine";
+import { generateAllHeadlines } from "../utils/newsEngine";
 import type { NewsHeadline } from "../utils/newsRules";
 
 const { Title, Text, Paragraph } = Typography;
@@ -71,24 +69,106 @@ export default function NewsFeed() {
     };
     load();
   }, []);
+  // Cached headlines: keep generated results in localStorage to avoid heavy recompute
+  const NEWS_CACHE_KEY = "news_cache_v1";
+  const [allHeadlines, setAllHeadlines] = useState<NewsHeadline[]>([]);
+  const [genLoading, setGenLoading] = useState(false);
 
-  // Generate all headlines dynamically
-  const allHeadlines = useMemo(() => {
-    if (loading) return [];
+  const getMatchTs = (m: Match) =>
+    (m.date as any)?.toDate
+      ? (m.date as any).toDate().getTime()
+      : new Date((m as any).date).getTime();
 
-    const headlines: NewsHeadline[] = [];
+  // Load from cache or generate when data is ready
+  useEffect(() => {
+    if (loading) return;
+    let cancelled = false;
 
-    // Player specific ones
-    players.forEach((p) => {
-      headlines.push(...generatePlayerNews(p, matches, customStats));
-    });
+    const latestMatchTs = matches.reduce(
+      (acc, m) => Math.max(acc, getMatchTs(m)),
+      0,
+    );
 
-    // Intertwined duo ones
-    headlines.push(...generateIntertwinedNews(players, matches, customStats));
+    const tryLoadCache = () => {
+      try {
+        const raw = localStorage.getItem(NEWS_CACHE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw) as {
+          ts: number;
+          latestMatchTs: number;
+          headlines: NewsHeadline[];
+        };
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        if (
+          parsed &&
+          parsed.ts >= oneDayAgo &&
+          parsed.latestMatchTs >= latestMatchTs
+        ) {
+          setAllHeadlines(parsed.headlines || []);
+          return true;
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
+      return false;
+    };
 
-    // Sort by importance / spiciness
-    return headlines.sort((a, b) => b.importance - a.importance);
+    if (tryLoadCache()) return;
+
+    // Generate synchronously (optimized) and cache
+    setGenLoading(true);
+    try {
+      const gen = generateAllHeadlines(
+        players.filter((p) => !p?.name.includes("placeholder")),
+        matches,
+        customStats,
+      );
+      if (!cancelled) {
+        setAllHeadlines(gen);
+        try {
+          localStorage.setItem(
+            NEWS_CACHE_KEY,
+            JSON.stringify({ ts: Date.now(), latestMatchTs, headlines: gen }),
+          );
+        } catch (e) {
+          // ignore storage errors
+        }
+      }
+    } finally {
+      setGenLoading(false);
+    }
+
+    return () => {
+      cancelled = true;
+    };
   }, [matches, players, customStats, loading]);
+
+  const regenerate = () => {
+    setGenLoading(true);
+    try {
+      const latestMatchTs = matches.reduce(
+        (acc, m) => Math.max(acc, getMatchTs(m)),
+        0,
+      );
+      console.log({ players });
+      const gen = generateAllHeadlines(
+        players.filter((p) => !p?.name.includes("placeholder")),
+        matches,
+        customStats,
+      );
+      setAllHeadlines(gen);
+      try {
+        localStorage.setItem(
+          NEWS_CACHE_KEY,
+          JSON.stringify({ ts: Date.now(), latestMatchTs, headlines: gen }),
+        );
+      } catch (e) {
+        // ignore
+      }
+    } finally {
+      setGenLoading(false);
+    }
+  };
 
   // Filtered headlines based on user interaction
   const displayedHeadlines = useMemo(() => {
@@ -247,6 +327,14 @@ export default function NewsFeed() {
               onChange={(e) => setSearchQuery(e.target.value)}
               allowClear
             />
+            <Button
+              type="default"
+              onClick={regenerate}
+              loading={genLoading}
+              icon={<ThunderboltOutlined />}
+            >
+              Refresh
+            </Button>
           </div>
 
           <Segmented
