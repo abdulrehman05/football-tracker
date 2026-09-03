@@ -18,8 +18,10 @@ export interface NewsHeadline {
   uniqueId?: string;
   // optional match reference when the headline pertains to a single match
   matchId?: string;
+  // optional epoch ms timestamp for the match date
+  matchDate?: number;
 }
-
+const RECENCYPERMATCHDURATION = 90 * 24 * 60 * 60 * 1000; // 90 days in ms
 // Helper to safely read nested match player stats
 function findPlayerInMatch(match: Match, playerId: string) {
   for (const team of match.teams) {
@@ -67,6 +69,12 @@ function getCustomStatValue(
 }
 
 const safe = (v: any) => (v == null ? 0 : Number(v));
+
+function getMatchTs(m: Match) {
+  return (m.date as any)?.toDate
+    ? (m.date as any).toDate().getTime()
+    : new Date((m as any).date).getTime();
+}
 
 // Player rules array — add or edit these rules easily
 export const playerRules: PlayerRule[] = [
@@ -240,6 +248,9 @@ export const playerRules: PlayerRule[] = [
       const f = findPlayerInMatch(m, player.id);
       if (!f) return;
       if (safe(f.stats.goals) >= 3) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_hattrick_${m.id}`,
           type: "player",
@@ -250,6 +261,7 @@ export const playerRules: PlayerRule[] = [
           statValue: safe(f.stats.goals),
           uniqueId: "hattrick",
           matchId: m.id,
+          matchDate: matchTs,
           importance: 6.5 + safe(f.stats.goals) * 0.04,
         });
       }
@@ -266,6 +278,9 @@ export const playerRules: PlayerRule[] = [
       const myScore = f.teamId === "A" ? m.score.teamA : m.score.teamB;
       const oppScore = f.teamId === "A" ? m.score.teamB : m.score.teamA;
       if (myScore < oppScore && safe(f.stats.playerRating) >= 8) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_carrying_${m.id}`,
           type: "player",
@@ -276,6 +291,7 @@ export const playerRules: PlayerRule[] = [
           statValue: safe(f.stats.playerRating),
           uniqueId: "highRatingLoss",
           matchId: m.id,
+          matchDate: matchTs,
           importance: 7 + (safe(f.stats.playerRating) - 8),
         });
       }
@@ -293,6 +309,9 @@ export const playerRules: PlayerRule[] = [
         safe(f.stats.shots) >= 4 &&
         safe(f.stats.shotsOnTarget) === safe(f.stats.shots)
       ) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_deadeye_${m.id}`,
           type: "player",
@@ -303,6 +322,7 @@ export const playerRules: PlayerRule[] = [
           statValue: safe(f.stats.shots),
           uniqueId: "perfectAccuracy",
           matchId: m.id,
+          matchDate: matchTs,
           importance: 5.88 + safe(f.stats.shotsOnTarget) * 0.04,
         });
       }
@@ -347,7 +367,7 @@ export const playerRules: PlayerRule[] = [
           emoji: "⚡",
           category: "Form",
           text: `${player.name} is hot: ${goals} goals in his last ${w} matches.`,
-          statValue: goals,
+          statValue: goals / w,
           uniqueId: `recentForm_${w}`,
           importance: 7.88 + goals * 0.04,
         });
@@ -433,6 +453,9 @@ export const playerRules: PlayerRule[] = [
       const f = findPlayerInMatch(m, player.id);
       if (!f) return;
       if (safe(f.stats.assists) >= 3) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_assist_master_${m.id}`,
           type: "player",
@@ -443,6 +466,7 @@ export const playerRules: PlayerRule[] = [
           statValue: safe(f.stats.assists),
           uniqueId: "assistMaster",
           matchId: m.id,
+          matchDate: matchTs,
           importance: 7.88 + safe(f.stats.assists) * 0.04,
         });
       }
@@ -494,6 +518,9 @@ export const playerRules: PlayerRule[] = [
       const g = safe(f.stats.goals);
       const s = safe(f.stats.shots);
       if (g >= 2 && s > 0 && s <= 2) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_super_clinical_${m.id}`,
           type: "player",
@@ -504,6 +531,7 @@ export const playerRules: PlayerRule[] = [
           statValue: g,
           uniqueId: "superClinical",
           matchId: m.id,
+          matchDate: matchTs,
           importance: 7,
         });
       }
@@ -521,6 +549,9 @@ export const playerRules: PlayerRule[] = [
         getCustomStatValue(f.stats, "keeper saves", customStats) ||
         getCustomStatValue(f.stats, "saves", customStats);
       if (saves >= 5) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_saves_master_${m.id}`,
           type: "player",
@@ -531,6 +562,7 @@ export const playerRules: PlayerRule[] = [
           statValue: saves,
           uniqueId: "keeperSaves",
           matchId: m.id,
+          matchDate: matchTs,
           importance: 7.88 + saves * 0.04,
         });
       }
@@ -545,6 +577,9 @@ export const playerRules: PlayerRule[] = [
       const f = findPlayerInMatch(m, player.id);
       if (!f) return;
       if (safe(f.stats.goals) >= 2 && safe(f.stats.assists) >= 2) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_double_double_${m.id}`,
           type: "player",
@@ -555,6 +590,7 @@ export const playerRules: PlayerRule[] = [
           statValue: safe(f.stats.goals) + safe(f.stats.assists),
           uniqueId: "doubleDouble",
           matchId: m.id,
+          matchDate: matchTs,
           importance: 10,
         });
       }
@@ -570,6 +606,9 @@ export const playerRules: PlayerRule[] = [
       if (!f) return;
       const misses = getCustomStatValue(f.stats, "penalty miss", customStats);
       if (misses > 0) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_pen_miss_${m.id}`,
           type: "player",
@@ -577,6 +616,8 @@ export const playerRules: PlayerRule[] = [
           emoji: "💔",
           category: "Shame",
           text: `${player.name} choked from 12 yards out with a painful penalty miss!`,
+          matchId: m.id,
+          matchDate: matchTs,
           importance: 7.88 + misses * 0.12,
         });
       }
@@ -618,6 +659,9 @@ export const playerRules: PlayerRule[] = [
       const s = safe(f.stats.shots);
       const r = safe(f.stats.playerRating);
       if (s >= 3 && g === 0 && a === 0 && r > 0 && r < 7.0) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `${player.id}_ghost_shooter_${m.id}`,
           type: "player",
@@ -625,6 +669,8 @@ export const playerRules: PlayerRule[] = [
           emoji: "💨",
           category: "Shame",
           text: `${player.name} wasted ${s} shots with 0 goals, 0 assists, and a low ${r} rating!`,
+          matchId: m.id,
+          matchDate: matchTs,
           importance: 6,
         });
       }
@@ -768,7 +814,7 @@ export const duoRules: DuoRule[] = [
         aGoalsVsB += safe(aFound.stats.goals);
       }
     });
-    if (playedAgainst >= 5 && aGoalsVsB === 0) {
+    if (playedAgainst >= 5 && aGoalsVsB === 0 && a.usualPosition != "GK") {
       return [
         {
           id: `pocketed_${a.id}_${b.id}`,
@@ -895,6 +941,9 @@ export const duoRules: DuoRule[] = [
       if (!aFound || !bFound || aFound.teamId === bFound.teamId) return;
       const aScore = aFound.teamId === "A" ? m.score.teamA : m.score.teamB;
       const bScore = bFound.teamId === "A" ? m.score.teamA : m.score.teamB;
+      const matchTs = getMatchTs(m);
+      const durationOld = RECENCYPERMATCHDURATION;
+      if (Date.now() - matchTs > durationOld) return;
       if (aScore - bScore >= 5) {
         hits.push({
           id: `thrashing_${a.id}_${b.id}_${m.id}`,
@@ -925,7 +974,7 @@ export const duoRules: DuoRule[] = [
       const rA = safe(aFound.stats.playerRating);
       const rB = safe(bFound.stats.playerRating);
 
-      if (teamScore < oppScore && rA > 0 && rA < 6.5 && rB > 0 && rB < 6.5) {
+      if (teamScore < oppScore && rA > 0 && rA < 6.5 && rB > 0 && rB < 6.4) {
         hits.push({
           id: `double_stinker_${a.id}_${b.id}_${m.id}`,
           type: "duo",
@@ -983,6 +1032,9 @@ export const duoRules: DuoRule[] = [
       const oppScore = aFound.teamId === "A" ? m.score.teamB : m.score.teamA;
       const duoGoals = safe(aFound.stats.goals) + safe(bFound.stats.goals);
 
+      const matchTs = getMatchTs(m);
+      const durationOld = RECENCYPERMATCHDURATION;
+      if (Date.now() - matchTs > durationOld) return;
       if (
         teamScore > oppScore &&
         teamScore >= 4 &&
@@ -1124,6 +1176,10 @@ export const duoRules: DuoRule[] = [
       if (!aFound || !bFound || aFound.teamId !== bFound.teamId) return;
       const rA = safe(aFound.stats.playerRating);
       const rB = safe(bFound.stats.playerRating);
+
+      const matchTs = getMatchTs(m);
+      const durationOld = RECENCYPERMATCHDURATION;
+      if (Date.now() - matchTs > durationOld) return;
 
       if (rA >= 8 && rB >= 8) {
         hits.push({
@@ -1401,6 +1457,9 @@ export const groupRules: GroupRule[] = [
 
       const all8Plus = found.every((f) => safe(f!.stats.playerRating) >= 7.8);
       if (all8Plus) {
+        const matchTs = getMatchTs(m);
+        const durationOld = RECENCYPERMATCHDURATION;
+        if (Date.now() - matchTs > durationOld) return;
         hits.push({
           id: `all_star_trio_${ids.join("_")}_${m.id}`,
           type: "duo",
@@ -1416,6 +1475,7 @@ export const groupRules: GroupRule[] = [
           ),
           uniqueId: "allStarTrio",
           matchId: m.id,
+          matchDate: matchTs,
           importance: 8 + group.length * 0.5,
         });
       }
@@ -1443,6 +1503,9 @@ export const groupRules: GroupRule[] = [
         0,
       );
 
+      const matchTs = getMatchTs(m);
+      const durationOld = RECENCYPERMATCHDURATION;
+      if (Date.now() - matchTs > durationOld) return;
       if (teamScore < oppScore && totalGoals === 0 && totalAssists === 0) {
         hits.push({
           id: `ghost_squad_${ids.join("_")}_${m.id}`,
@@ -1479,7 +1542,7 @@ export const groupRules: GroupRule[] = [
       if (teamScore >= 3 && groupGoals === teamScore) monopolyGames++;
     });
 
-    if (monopolyGames >= 2) {
+    if (monopolyGames >= 3) {
       return [
         {
           id: `trio_monopoly_${ids.join("_")}`,
@@ -1635,7 +1698,7 @@ export const groupRules: GroupRule[] = [
       if (teamScore - oppScore === 1) narrowWins++;
     });
 
-    if (narrowWins >= 2) {
+    if (narrowWins >= 3) {
       return [
         {
           id: `clutch_crew_${ids.join("_")}`,
