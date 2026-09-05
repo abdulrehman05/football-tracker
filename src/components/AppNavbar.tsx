@@ -9,6 +9,8 @@ import {
   LogoutOutlined,
   TeamOutlined,
   HourglassOutlined,
+  LoginOutlined,
+  NotificationOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -29,6 +31,12 @@ const Navbar = () => {
       label: "Dashboard",
       icon: <DashboardOutlined />,
       //   protected: true,
+    },
+    {
+      key: "/news-feed",
+      label: "News Feed",
+      icon: <NotificationOutlined />,
+      protected: true,
     },
     {
       key: "/matches",
@@ -56,8 +64,8 @@ const Navbar = () => {
     },
     {
       key: "/login",
-      label: "Login",
-      icon: <TrophyOutlined />,
+      label: "",
+      icon: <LoginOutlined />,
       protected: true,
       onlyPublic: true,
     },

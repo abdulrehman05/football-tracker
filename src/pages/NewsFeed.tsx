@@ -11,7 +11,6 @@ import {
   Input,
   Avatar,
   Badge,
-  Modal,
   List,
   Pagination,
   Button,
@@ -27,6 +26,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import dayjs from "dayjs";
+import NewsCard from "../components/NewsCard";
 
 import type { Match } from "../types/match";
 import type { Player } from "../types/Player";
@@ -46,10 +46,7 @@ export default function NewsFeed() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("Breaking");
   const [searchQuery, setSearchQuery] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
-  const [activeHeadline, setActiveHeadline] = useState<NewsHeadline | null>(
-    null,
-  );
+  // modal removed; cards display details inline via NewsCard
 
   useEffect(() => {
     const load = async () => {
@@ -352,85 +349,15 @@ export default function NewsFeed() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {displayedHeadlines
+            .sort((a, b) => (b.importance || 0) - (a.importance || 0))
             .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-            .map((headline, idx) => (
-              <Card
-                hoverable
-                onClick={() => {
-                  setActiveHeadline(headline);
-                  setModalVisible(true);
-                }}
-                style={{
-                  borderRadius: 10,
-                  padding: 14,
-                  boxShadow: "0 6px 18px rgba(17,17,26,0.04)",
-                  border: "1px solid rgba(0,0,0,0.04)",
-                  cursor: "pointer",
-                  display: "flex",
-                  gap: 12,
-                  alignItems: "center",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "space-between",
-                    gap: 16,
-                  }}
-                >
-                  <span style={{ fontSize: 32, lineHeight: 1 }}>
-                    {headline.emoji}
-                  </span>
-
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: 6,
-                      }}
-                    >
-                      <Tag color={categoryColors[headline.category]}>
-                        {headline.category}
-                      </Tag>
-
-                      {headline.importance >= 9 && (
-                        <Tag icon={<FireOutlined />} color="error">
-                          BREAKING
-                        </Tag>
-                      )}
-                    </div>
-
-                    <Paragraph
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 600,
-                        margin: 0,
-                        color: "#111827",
-                        lineHeight: 1.25,
-                      }}
-                    >
-                      {headline.text}
-                    </Paragraph>
-
-                    <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-                      {(headline.relatedPlayerIds || [])
-                        .slice(0, 4)
-                        .map((id) => {
-                          const p = players.find((x) => x.id === id);
-                          return (
-                            <Avatar
-                              key={id}
-                              size={24}
-                              src={p?.profilePictureUrl}
-                              icon={<UserOutlined />}
-                            />
-                          );
-                        })}
-                    </div>
-                  </div>
-                </div>
-              </Card>
+            .map((headline) => (
+              <NewsCard
+                key={headline.id}
+                headline={headline}
+                players={players}
+                matches={matches}
+              />
             ))}
 
           {displayedHeadlines.length > PAGE_SIZE && (
@@ -456,97 +383,7 @@ export default function NewsFeed() {
           )}
         </div>
       )}
-      {/* Detail Modal */}
-      <Modal
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={720}
-        bodyStyle={{ padding: 24 }}
-        title={activeHeadline?.text}
-      >
-        {activeHeadline ? (
-          <div>
-            <div style={{ marginBottom: 12 }}>
-              <Tag color={categoryColors[activeHeadline.category]}>
-                {activeHeadline.category}
-              </Tag>
-              <Tag>{activeHeadline.importance} importance</Tag>
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <strong>Related players:</strong>{" "}
-              {(activeHeadline.relatedPlayerIds || [activeHeadline.playerId])
-                .filter(Boolean)
-                .map((id) => players.find((p) => p.id === id))
-                .filter(Boolean)
-                .map((p) => p!.name)
-                .join(", ") || "—"}
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <strong>Relevant matches</strong>
-            </div>
-            <List
-              size="small"
-              dataSource={matches
-                .filter((m) => {
-                  if (activeHeadline.playerId) {
-                    return m.teams.some((t) =>
-                      t.players?.some(
-                        (pl) => pl.playerId === activeHeadline.playerId,
-                      ),
-                    );
-                  }
-                  const ids = activeHeadline.relatedPlayerIds || [];
-                  if (ids.length === 0) return false;
-                  return ids.every((id) =>
-                    m.teams.some((t) =>
-                      t.players?.some((pl) => pl.playerId === id),
-                    ),
-                  );
-                })
-                .sort((a, b) => {
-                  const da = (a.date as any)?.toDate
-                    ? (a.date as any).toDate().getTime()
-                    : new Date((a as any).date).getTime();
-                  const db = (b.date as any)?.toDate
-                    ? (b.date as any).toDate().getTime()
-                    : new Date((b as any).date).getTime();
-                  return db - da;
-                })
-                .slice(0, 8)
-                .map((m) => m)}
-              renderItem={(m: Match) => (
-                <List.Item>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      width: "100%",
-                    }}
-                  >
-                    <div>
-                      {m.teams?.[0]?.name || "Team A"} vs{" "}
-                      {m.teams?.[1]?.name || "Team B"}
-                      <div style={{ color: "#777", fontSize: 12 }}>
-                        {dayjs(
-                          (m.date as any)?.toDate
-                            ? (m.date as any).toDate()
-                            : (m.date as any),
-                        ).format("DD MMM YYYY")}
-                      </div>
-                    </div>
-                    <div style={{ fontWeight: 700 }}>
-                      {m.score.teamA} - {m.score.teamB}
-                    </div>
-                  </div>
-                </List.Item>
-              )}
-            />
-          </div>
-        ) : null}
-      </Modal>
+      {/* Detail modal removed — details are shown inline in NewsCard */}
     </div>
   );
 }

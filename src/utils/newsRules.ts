@@ -76,6 +76,23 @@ function getMatchTs(m: Match) {
     : new Date((m as any).date).getTime();
 }
 
+// Rule-level guard: skip pushing a match-specific headline when the same
+// matchId already exists in this rule's hits and the existing headline's
+// first relatedPlayerId equals the provided mainPlayerId.
+function shouldSkipMatchPush(
+  hits: NewsHeadline[],
+  matchId?: string,
+  mainPlayerId?: string,
+): boolean {
+  if (!matchId || !mainPlayerId) return false;
+  return (
+    hits.filter(
+      (h) =>
+        h.matchId === matchId && h.relatedPlayerIds?.includes(mainPlayerId),
+    ).length < 2
+  );
+}
+
 // Player rules array — add or edit these rules easily
 export const playerRules: PlayerRule[] = [
   // Unbeaten streak
@@ -591,7 +608,7 @@ export const playerRules: PlayerRule[] = [
           uniqueId: "doubleDouble",
           matchId: m.id,
           matchDate: matchTs,
-          importance: 10,
+          importance: 10 + (safe(f.stats.goals) + safe(f.stats.assists)) * 0.03,
         });
       }
     });
@@ -761,7 +778,7 @@ export const duoRules: DuoRule[] = [
           text: `${a.name} played with ${b.name} ${playedTogether} times and has NEVER won!`,
           statValue: playedTogether,
           uniqueId: "playedTogether_neverWon",
-          importance: 9.92 + playedTogether * 0.04,
+          importance: 9.92 + playedTogether * 0.03,
         },
       ];
     }
@@ -887,18 +904,20 @@ export const duoRules: DuoRule[] = [
         ((aFound.teamId === "A" && m.score.teamA < m.score.teamB) ||
           (aFound.teamId === "B" && m.score.teamB < m.score.teamA))
       ) {
-        hits.push({
-          id: `punch_${a.id}_${b.id}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: [a.id, b.id],
-          emoji: "👊",
-          category: "Silly",
-          text: `${a.name} punched in a match where he lost against ${b.name}'s team!`,
-          statValue: safe(aPunches.value),
-          uniqueId: "punchIncident",
-          matchId: m.id,
-          importance: 6,
-        });
+        if (!shouldSkipMatchPush(hits, m.id, a.id)) {
+          hits.push({
+            id: `punch_${a.id}_${b.id}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: [a.id, b.id],
+            emoji: "👊",
+            category: "Silly",
+            text: `${a.name} punched in a match where he lost against ${b.name}'s team!`,
+            statValue: safe(aPunches.value),
+            uniqueId: "punchIncident",
+            matchId: m.id,
+            importance: 6,
+          });
+        }
       }
     });
     return hits;
@@ -945,18 +964,20 @@ export const duoRules: DuoRule[] = [
       const durationOld = RECENCYPERMATCHDURATION;
       if (Date.now() - matchTs > durationOld) return;
       if (aScore - bScore >= 5) {
-        hits.push({
-          id: `thrashing_${a.id}_${b.id}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: [a.id, b.id],
-          emoji: "💥",
-          category: "Shame",
-          text: `Total demolition: ${a.name}'s team crushed ${b.name}'s team ${aScore}-${bScore}!`,
-          statValue: aScore - bScore,
-          uniqueId: "thrashingMargin",
-          matchId: m.id,
-          importance: 7,
-        });
+        if (!shouldSkipMatchPush(hits, m.id, a.id)) {
+          hits.push({
+            id: `thrashing_${a.id}_${b.id}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: [a.id, b.id],
+            emoji: "💥",
+            category: "Shame",
+            text: `Total demolition: ${a.name}'s team crushed ${b.name}'s team ${aScore}-${bScore}!`,
+            statValue: aScore - bScore,
+            uniqueId: "thrashingMargin",
+            matchId: m.id,
+            importance: 7,
+          });
+        }
       }
     });
     return hits;
@@ -1040,18 +1061,20 @@ export const duoRules: DuoRule[] = [
         teamScore >= 4 &&
         duoGoals / teamScore >= 0.8
       ) {
-        hits.push({
-          id: `goal_monopoly_${a.id}_${b.id}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: [a.id, b.id],
-          emoji: "⚽",
-          category: "Glory",
-          text: `Two-man show! ${a.name} and ${b.name} scored ${duoGoals} of their team's ${teamScore} total goals!`,
-          statValue: duoGoals,
-          uniqueId: "goalMonopoly",
-          matchId: m.id,
-          importance: 8,
-        });
+        if (!shouldSkipMatchPush(hits, m.id, a.id)) {
+          hits.push({
+            id: `goal_monopoly_${a.id}_${b.id}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: [a.id, b.id],
+            emoji: "⚽",
+            category: "Glory",
+            text: `Two-man show! ${a.name} and ${b.name} scored ${duoGoals} of their team's ${teamScore} total goals!`,
+            statValue: duoGoals,
+            uniqueId: "goalMonopoly",
+            matchId: m.id,
+            importance: 8,
+          });
+        }
       }
     });
     return hits;
@@ -1096,7 +1119,7 @@ export const duoRules: DuoRule[] = [
       totalGoalsScored += m.score.teamA + m.score.teamB;
     });
 
-    if (playedAgainst >= 3 && totalGoalsScored / playedAgainst > 7.5) {
+    if (playedAgainst >= 3 && totalGoalsScored / playedAgainst > 8) {
       const avg = (totalGoalsScored / playedAgainst).toFixed(1);
       return [
         {
@@ -1106,7 +1129,7 @@ export const duoRules: DuoRule[] = [
           emoji: "🎆",
           category: "Silly",
           text: `Goal-fest guaranteed! Matches between ${a.name} and ${b.name} average ${avg} total goals! (${playedAgainst} matches)`,
-          importance: 7 + (totalGoalsScored / playedAgainst) * 0.4,
+          importance: 7 + (totalGoalsScored / playedAgainst) * 0.12,
         },
       ];
     }
@@ -1153,15 +1176,17 @@ export const duoRules: DuoRule[] = [
       const s = safe(aFound.stats.shots);
       const g = safe(aFound.stats.goals);
       if (s >= 6 && g === 0) {
-        hits.push({
-          id: `target_practice_${a.id}_${b.id}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: [a.id, b.id],
-          emoji: "🚫",
-          category: "Shame",
-          text: `${a.name} unleashed ${s} shots against ${b.name}'s defense and STILL couldn't score!`,
-          importance: 6.5,
-        });
+        if (!shouldSkipMatchPush(hits, m.id, a.id)) {
+          hits.push({
+            id: `target_practice_${a.id}_${b.id}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: [a.id, b.id],
+            emoji: "🚫",
+            category: "Shame",
+            text: `${a.name} unleashed ${s} shots against ${b.name}'s defense and STILL couldn't score!`,
+            importance: 6.5,
+          });
+        }
       }
     });
     return hits;
@@ -1182,18 +1207,20 @@ export const duoRules: DuoRule[] = [
       if (Date.now() - matchTs > durationOld) return;
 
       if (rA >= 8 && rB >= 8) {
-        hits.push({
-          id: `double_masterclass_${a.id}_${b.id}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: [a.id, b.id],
-          emoji: "⭐",
-          category: "Glory",
-          text: `Masterclass pair: ${a.name} (${rA}) and ${b.name} (${rB}) put on a performance for the ages!`,
-          statValue: (rA + rB) / 2,
-          uniqueId: "doubleMasterclass",
-          matchId: m.id,
-          importance: 7.5,
-        });
+        if (!shouldSkipMatchPush(hits, m.id, a.id)) {
+          hits.push({
+            id: `double_masterclass_${a.id}_${b.id}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: [a.id, b.id],
+            emoji: "⭐",
+            category: "Glory",
+            text: `Masterclass pair: ${a.name} (${rA}) and ${b.name} (${rB}) put on a performance for the ages!`,
+            statValue: (rA + rB) / 2,
+            uniqueId: "doubleMasterclass",
+            matchId: m.id,
+            importance: 7.5,
+          });
+        }
       }
     });
     return hits;
@@ -1426,18 +1453,20 @@ export const groupRules: GroupRule[] = [
       const oppScore = teamId === "A" ? m.score.teamB : m.score.teamA;
 
       if (oppScore >= 6) {
-        hits.push({
-          id: `defensive_disaster_${ids.join("_")}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: ids,
-          emoji: "🌊",
-          category: "Shame",
-          text: `Defensive collapse! ${group.map((g) => g.name).join(", ")} shipped ${oppScore} goals in a painful loss!`,
-          statValue: oppScore,
-          uniqueId: "defensiveDisaster",
-          matchId: m.id,
-          importance: 5.01 + oppScore * 0.5,
-        });
+        if (!shouldSkipMatchPush(hits, m.id, ids[0])) {
+          hits.push({
+            id: `defensive_disaster_${ids.join("_")}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: ids,
+            emoji: "🌊",
+            category: "Shame",
+            text: `Defensive collapse! ${group.map((g) => g.name).join(", ")} shipped ${oppScore} goals in a painful loss!`,
+            statValue: oppScore,
+            uniqueId: "defensiveDisaster",
+            matchId: m.id,
+            importance: 5.01 + oppScore * 0.5,
+          });
+        }
       }
     });
     return hits;
@@ -1460,24 +1489,26 @@ export const groupRules: GroupRule[] = [
         const matchTs = getMatchTs(m);
         const durationOld = RECENCYPERMATCHDURATION;
         if (Date.now() - matchTs > durationOld) return;
-        hits.push({
-          id: `all_star_trio_${ids.join("_")}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: ids,
-          emoji: "🌟",
-          category: "Glory",
-          text: `All-Star trio: ${group.map((g) => g.name).join(", ")} ALL put up 7.8+ ratings in the same game!`,
-          statValue: Number(
-            (
-              found.reduce((s, f) => s + safe(f!.stats.playerRating), 0) /
-              found.length
-            ).toFixed(2),
-          ),
-          uniqueId: "allStarTrio",
-          matchId: m.id,
-          matchDate: matchTs,
-          importance: 8 + group.length * 0.5,
-        });
+        if (!shouldSkipMatchPush(hits, m.id, ids[0])) {
+          hits.push({
+            id: `all_star_trio_${ids.join("_")}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: ids,
+            emoji: "🌟",
+            category: "Glory",
+            text: `All-Star trio: ${group.map((g) => g.name).join(", ")} ALL put up 7.8+ ratings in the same game!`,
+            statValue: Number(
+              (
+                found.reduce((s, f) => s + safe(f!.stats.playerRating), 0) /
+                found.length
+              ).toFixed(2),
+            ),
+            uniqueId: "allStarTrio",
+            matchId: m.id,
+            matchDate: matchTs,
+            importance: 8 + group.length * 0.5,
+          });
+        }
       }
     });
     return hits;
@@ -1507,18 +1538,20 @@ export const groupRules: GroupRule[] = [
       const durationOld = RECENCYPERMATCHDURATION;
       if (Date.now() - matchTs > durationOld) return;
       if (teamScore < oppScore && totalGoals === 0 && totalAssists === 0) {
-        hits.push({
-          id: `ghost_squad_${ids.join("_")}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: ids,
-          emoji: "👻",
-          category: "Shame",
-          text: `Ghost squad: ${group.map((g) => g.name).join(", ")} collectively registered ZERO goals and ZERO assists in a loss!`,
-          statValue: totalGoals,
-          uniqueId: "ghostSquad",
-          matchId: m.id,
-          importance: 8.3,
-        });
+        if (!shouldSkipMatchPush(hits, m.id, ids[0])) {
+          hits.push({
+            id: `ghost_squad_${ids.join("_")}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: ids,
+            emoji: "👻",
+            category: "Shame",
+            text: `Ghost squad: ${group.map((g) => g.name).join(", ")} collectively registered ZERO goals and ZERO assists in a loss!`,
+            statValue: totalGoals,
+            uniqueId: "ghostSquad",
+            matchId: m.id,
+            importance: 8.3,
+          });
+        }
       }
     });
     return hits;
@@ -1619,7 +1652,7 @@ export const groupRules: GroupRule[] = [
           text: `Pure chaos: Whenever ${group.map((g) => g.name).join(", ")} share a pitch, games average ${(totalGoals / matchesTogether).toFixed(1)} goals! (${matchesTogether} matches)`,
           statValue: Number((totalGoals / matchesTogether).toFixed(2)),
           uniqueId: "chaoticTrio",
-          importance: 8 + totalGoals * 0.5,
+          importance: 7.7 + totalGoals * 0.03,
         },
       ];
     }
@@ -1645,37 +1678,41 @@ export const groupRules: GroupRule[] = [
       });
 
       if (allBadBoys) {
-        hits.push({
-          id: `card_trio_${ids.join("_")}_${m.id}`,
-          type: "duo",
-          relatedPlayerIds: ids,
-          emoji: "🥊",
-          category: "Silly",
-          text: `Enforcer group: ${group.map((g) => g.name).join(", ")} ALL picked up cards/punches in the same match!`,
-          statValue: ids.reduce(
-            (s, id) =>
-              s +
-              getCustomStatValue(
-                findPlayerInMatch(m, id)!.stats,
-                "yellow cards",
-                customStats,
-              ) +
-              getCustomStatValue(
-                findPlayerInMatch(m, id)!.stats,
-                "red card",
-                customStats,
-              ) +
-              getCustomStatValue(
-                findPlayerInMatch(m, id)!.stats,
-                "punches",
-                customStats,
-              ),
-            0,
-          ),
-          uniqueId: "cardTrioMatch",
-          matchId: m.id,
-          importance: 9,
-        });
+        const cardSum = ids.reduce((s, id) => {
+          return (
+            s +
+            getCustomStatValue(
+              findPlayerInMatch(m, id)!.stats,
+              "yellow cards",
+              customStats,
+            ) +
+            getCustomStatValue(
+              findPlayerInMatch(m, id)!.stats,
+              "red card",
+              customStats,
+            ) +
+            getCustomStatValue(
+              findPlayerInMatch(m, id)!.stats,
+              "punches",
+              customStats,
+            )
+          );
+        }, 0);
+
+        if (!shouldSkipMatchPush(hits, m.id, ids[0])) {
+          hits.push({
+            id: `card_trio_${ids.join("_")}_${m.id}`,
+            type: "duo",
+            relatedPlayerIds: ids,
+            emoji: "🥊",
+            category: "Silly",
+            text: `Enforcer group: ${group.map((g) => g.name).join(", ")} ALL picked up cards/punches in the same match!`,
+            statValue: cardSum,
+            uniqueId: "cardTrioMatch",
+            matchId: m.id,
+            importance: 9,
+          });
+        }
       }
     });
     return hits;

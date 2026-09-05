@@ -16,6 +16,28 @@ function normalizeText(t: string) {
   return t.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+// Recency boost: returns an additive importance value between 0.01 and 2
+// based on how recent the headline's matchDate (epoch ms) is.
+// - If `matchDate` is missing, returns defaultBoost (1) for general stats.
+// - <= 2 weeks: +2.0
+// - <= 1 month: +1.5
+// - <= 3 months: +1.0
+// - > 3 months: +0.5
+// - Very old: +0.1 (fallback)
+function recencyBoost(matchDate?: number, defaultBoost = 1): number {
+  console.log({ matchDate, defaultBoost });
+
+  if (!matchDate) return defaultBoost;
+  const now = Date.now();
+  const age = now - matchDate;
+  const day = 24 * 60 * 60 * 1000;
+  if (age <= 14 * day) return 2.0;
+  if (age <= 30 * day) return 1.5;
+  if (age <= 90 * day) return 1.0;
+  if (age <= 365 * day) return 0.5;
+  return 0.1;
+}
+
 // Keep only the most important headline per unique normalized text
 function dedupeHeadlines(headlines: NewsHeadline[]) {
   const byText = new Map<string, NewsHeadline>();
@@ -80,11 +102,12 @@ function dedupeHeadlines(headlines: NewsHeadline[]) {
   return filtered.sort((a, b) => (b.importance || 0) - (a.importance || 0));
 }
 
-export function generatePlayerNews(
+function generatePlayerNews(
   player: Player,
   matches: Match[],
   customStats: CustomStat[],
 ): NewsHeadline[] {
+  console.log("generateplayer");
   const headlines: NewsHeadline[] = [];
   for (const r of playerRules) {
     try {
@@ -98,7 +121,13 @@ export function generatePlayerNews(
         return da - db;
       });
       const res = r(player, sorted, customStats) || [];
-      for (const h of res) headlines.push(h);
+      for (const h of res) {
+        // Apply recency boost to importance. If headline has a matchDate,
+        // use it to compute additive boost; otherwise use default 1.
+        const boost = recencyBoost(h.matchDate, 1);
+        h.importance = (h.importance || 0) + boost;
+        headlines.push(h);
+      }
     } catch (err) {
       // resilient: ignore rule errors
     }
@@ -106,7 +135,7 @@ export function generatePlayerNews(
   return dedupeHeadlines(headlines);
 }
 
-export function generateIntertwinedNews(
+function generateIntertwinedNews(
   players: Player[],
   matches: Match[],
   customStats: CustomStat[],
@@ -128,7 +157,11 @@ export function generateIntertwinedNews(
             return da - db;
           });
           const res = r(a, b, sorted, customStats) || [];
-          for (const h of res) headlines.push(h);
+          for (const h of res) {
+            const boost = recencyBoost(h.matchDate, 1);
+            h.importance = (h.importance || 0) + boost;
+            headlines.push(h);
+          }
         } catch (err) {
           // ignore
         }
@@ -171,7 +204,11 @@ export function generateIntertwinedNews(
             return da - db;
           });
           const res = r(t, sorted, customStats) || [];
-          for (const h of res) headlines.push(h);
+          for (const h of res) {
+            const boost = recencyBoost(h.matchDate, 1);
+            h.importance = (h.importance || 0) + boost;
+            headlines.push(h);
+          }
         } catch (err) {
           /* ignore group rule error */
         }
@@ -194,7 +231,11 @@ export function generateIntertwinedNews(
             return da - db;
           });
           const res = r(q, sorted, customStats) || [];
-          for (const h of res) headlines.push(h);
+          for (const h of res) {
+            const boost = recencyBoost(h.matchDate, 1);
+            h.importance = (h.importance || 0) + boost;
+            headlines.push(h);
+          }
         } catch (err) {
           /* ignore group rule error */
         }
@@ -204,7 +245,7 @@ export function generateIntertwinedNews(
   return dedupeHeadlines(headlines);
 }
 
-export default { generatePlayerNews, generateIntertwinedNews };
+// Default export removed — use named exports (generateAllHeadlines) in consumers.
 
 // Synchronous optimized generator: precomputes per-player match lists and
 // runs player/duo/group rules using those precomputed slices to avoid
@@ -260,7 +301,11 @@ export function generateAllHeadlines(
     for (const r of playerRules) {
       try {
         const res = r(p, pMatches, customStats) || [];
-        for (const h of res) headlines.push(h);
+        for (const h of res) {
+          const boost = recencyBoost(h.matchDate, 1);
+          h.importance = (h.importance || 0) + boost;
+          headlines.push(h);
+        }
       } catch {
         /* ignore */
       }
@@ -282,7 +327,11 @@ export function generateAllHeadlines(
       for (const r of duoRules) {
         try {
           const res = r(a, b, duoMatches, customStats) || [];
-          for (const h of res) headlines.push(h);
+          for (const h of res) {
+            const boost = recencyBoost(h.matchDate, 1);
+            h.importance = (h.importance || 0) + boost;
+            headlines.push(h);
+          }
         } catch {
           /* ignore */
         }
@@ -323,7 +372,11 @@ export function generateAllHeadlines(
     for (const r of groupRules) {
       try {
         const res = r(t, tMatches, customStats) || [];
-        for (const h of res) headlines.push(h);
+        for (const h of res) {
+          const boost = recencyBoost(h.matchDate, 1);
+          h.importance = (h.importance || 0) + boost;
+          headlines.push(h);
+        }
       } catch {
         /* ignore */
       }
@@ -343,7 +396,11 @@ export function generateAllHeadlines(
     for (const r of groupRules) {
       try {
         const res = r(q, qMatches, customStats) || [];
-        for (const h of res) headlines.push(h);
+        for (const h of res) {
+          const boost = recencyBoost(h.matchDate, 1);
+          h.importance = (h.importance || 0) + boost;
+          headlines.push(h);
+        }
       } catch {
         /* ignore */
       }
